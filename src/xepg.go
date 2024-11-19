@@ -411,13 +411,13 @@ func createXEPGDatabase() (err error) {
 			channel.TvgName = channel.Name
 		}
 
-		channelHash := channel.TvgName + channel.FileM3UID
+		channelHash := channel.UUIDValue + channel.FileM3UID
 		xepgChannelsValuesMap[channelHash] = channel
 	}
 
-	groupCounters := make(map[string]int)
-	re := regexp.MustCompile(`\b\d{2,3}\b`)
-	lastNumberLength := make(map[string]int)
+	// groupCounters := make(map[string]int)
+	// re := regexp.MustCompile(`\b\d{2,3}\b`)
+	// lastNumberLength := make(map[string]int)
 
 	for _, dsa := range Data.Streams.Active {
 		var channelExists = false  // Entscheidet ob ein Kanal neu zu Datenbank hinzugefügt werden soll.  Decides whether a channel should be added to the database
@@ -438,26 +438,26 @@ func createXEPGDatabase() (err error) {
 		Data.Cache.Streams.Active = append(Data.Cache.Streams.Active, m3uChannel.Name+m3uChannel.FileM3UID)
 
 		// Try to find the channel based on matching all known values.  If that fails, then move to full channel scan
-		m3uChannelHash := m3uChannel.TvgName + m3uChannel.FileM3UID
-		if m3uChannel.LiveEvent == "true" {
-			match := re.FindString(m3uChannel.Name)
-			if match != "" {
-				// Increment the counter for the group-title
-				numberLength := len(match)
-				groupCounters[m3uChannel.GroupTitle]++
-				lastNumberLength[m3uChannel.GroupTitle] = numberLength
+		m3uChannelHash := m3uChannel.UUIDValue + m3uChannel.FileM3UID
+		// if m3uChannel.LiveEvent == "true" {
+		// 	match := re.FindString(m3uChannel.Name)
+		// 	if match != "" {
+		// 		// Increment the counter for the group-title
+		// 		numberLength := len(match)
+		// 		groupCounters[m3uChannel.GroupTitle]++
+		// 		lastNumberLength[m3uChannel.GroupTitle] = numberLength
 
-				// Create the new formatted name with the group-title and updated number
-				newName := fmt.Sprintf("%s%03d", m3uChannel.GroupTitle, groupCounters[m3uChannel.GroupTitle])
-				if len(match) == 2 {
-					newName = fmt.Sprintf("%s%02d", m3uChannel.GroupTitle, groupCounters[m3uChannel.GroupTitle])
-				} else if len(match) == 3 {
-					newName = fmt.Sprintf("%s%03d", m3uChannel.GroupTitle, groupCounters[m3uChannel.GroupTitle])
-				}
-				m3uChannelHash = newName
-			}
+		// 		// Create the new formatted name with the group-title and updated number
+		// 		newName := fmt.Sprintf("%s%03d", m3uChannel.GroupTitle, groupCounters[m3uChannel.GroupTitle])
+		// 		if len(match) == 2 {
+		// 			newName = fmt.Sprintf("%s%02d", m3uChannel.GroupTitle, groupCounters[m3uChannel.GroupTitle])
+		// 		} else if len(match) == 3 {
+		// 			newName = fmt.Sprintf("%s%03d", m3uChannel.GroupTitle, groupCounters[m3uChannel.GroupTitle])
+		// 		}
+		// 		m3uChannelHash = newName
+		// 	}
 
-		}
+		// }
 
 		if val, ok := xepgChannelsValuesMap[m3uChannelHash]; ok {
 			channelExists = true

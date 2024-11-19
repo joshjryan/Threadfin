@@ -15,7 +15,6 @@ func MakeInterfaceFromM3U(byteStream []byte) (allChannels []interface{}, err err
 
 	var parseMetaData = func(channel string) (stream map[string]string) {
 		var channelName string // Declare inside the function
-		var uuids []string
 
 		stream = make(map[string]string)
 		var exceptForParameter = `[a-z-A-Z&=]*(".*?")`
@@ -92,17 +91,10 @@ func MakeInterfaceFromM3U(byteStream []byte) (allChannels []interface{}, err err
 			stream["_values"] = value
 		}
 
-		// Assign a unique ID to the stream
-		for key, value := range stream {
-			if strings.Contains(strings.ToLower(key), "tvg-name") {
-				if indexOfString(value, uuids) != -1 {
-					break
-				}
-				uuids = append(uuids, value)
-				stream["_uuid.key"] = key
-				stream["_uuid.value"] = value
-				break
-			}
+		var uniqueId = findID(stream)
+		for uuidkey, uuidvalue := range uniqueId {
+			stream["_uuid.key"] = uuidkey
+			stream["_uuid.value"] = uuidvalue
 		}
 
 		return
@@ -135,13 +127,23 @@ func MakeInterfaceFromM3U(byteStream []byte) (allChannels []interface{}, err err
 	return
 }
 
-func indexOfString(element string, data []string) int {
-
-	for k, v := range data {
-		if element == v {
-			return k
+func findID(data map[string]string) map[string]string {
+	result := make(map[string]string)
+	// First look for an ID field that isn't tvg-id
+	for key, value := range data {
+		lowerKey := strings.ToLower(key)
+		if strings.Contains(lowerKey, "cuid") || strings.Contains(lowerKey, "channelid") {
+			result[key] = value
+			return result
 		}
 	}
-
-	return -1
+	// If there isn't a non-tvg-id key, then find the tvg-id
+	for key, value := range data {
+		lowerKey := strings.ToLower(key)
+		if lowerKey == "tvg-name" {
+			result[key] = value
+			return result
+		}
+	}
+	return result
 }
