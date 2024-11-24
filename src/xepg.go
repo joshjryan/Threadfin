@@ -512,7 +512,7 @@ func createXEPGDatabase() (err error) {
 				xepgChannel.Live = true
 			}
 
-			// Kanalname aktualisieren, nur mit Kanal ID's möglich
+			// Update the channel name, if it has a unique ID
 			if channelHasUUID {
 				programData, _ := getProgramData(xepgChannel)
 				if xepgChannel.XUpdateChannelName || strings.Contains(xepgChannel.TvgID, "threadfin-") || (m3uChannel.LiveEvent == "true" && len(programData.Program) <= 3) {
@@ -520,7 +520,7 @@ func createXEPGDatabase() (err error) {
 				}
 			}
 
-			// Kanallogo aktualisieren. Wird bei vorhandenem Logo in der XMLTV Datei wieder überschrieben
+			// Update het channel logo. This will overwrite the existing XMLTV logo
 			if xepgChannel.XUpdateChannelIcon {
 				var imgc = Data.Cache.Images
 				xepgChannel.TvgLogo = imgc.Image.GetURL(m3uChannel.TvgLogo, Settings.HttpThreadfinDomain, Settings.Port, Settings.ForceHttps, Settings.HttpsPort, Settings.HttpsThreadfinDomain)
@@ -639,7 +639,7 @@ func createXEPGDatabase() (err error) {
 			newChannel.XChannelID = xChannelID
 
 			Data.XEPG.Channels[xepg] = newChannel
-			channelHash := newChannel.TvgName + newChannel.FileM3UID
+			channelHash := newChannel.UUIDValue + newChannel.FileM3UID
 			xepgChannelsValuesMap[channelHash] = newChannel
 
 		}
