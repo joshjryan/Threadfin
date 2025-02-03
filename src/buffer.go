@@ -447,6 +447,9 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 					}
 
 					var tmpFiles = getBufTmpFiles(&stream)
+					const maxItems = 5                          // Maximum number of items to store
+					var lastItems = make([]string, 0, maxItems) // Slice to store the last items
+
 					//fmt.Println("Buffer Loop:", stream.Connection)
 
 					for _, f := range tmpFiles {
@@ -455,19 +458,23 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 							killClientConnection(streamID, playlistID, false)
 							return
 						}
-						// Check if the last item in tmpFiles hasn't changed in 5 iterations
+
+						// Store the last item of tmpFiles in the array
 						if len(tmpFiles) > 0 {
-							if len(oldSegments) > 0 && oldSegments[len(oldSegments)-1] == tmpFiles[len(tmpFiles)-1] {
-								timeOut++
-								if timeOut > 5 {
-									showInfo("The last buffer segment hasn't changed; Killing Client Connection")
-									killClientConnection(streamID, playlistID, false)
-									return
-								}
-							} else {
-								timeOut = 0
+							lastItem := tmpFiles[len(tmpFiles)-1]
+							if len(lastItems) == maxItems {
+								lastItems = lastItems[1:] // Remove the oldest item
+							}
+							lastItems = append(lastItems, lastItem)
+
+							// Check if all items in the array are the same
+							if len(lastItems) == maxItems && allItemsSame(lastItems) {
+								showInfo("LOOP FIX: The buffer segments haven't changed; Killing Client Connection")
+								killClientConnection(streamID, playlistID, true)
+								return
 							}
 						}
+
 						oldSegments = append(oldSegments, f)
 
 						var fileName = stream.Folder + f
@@ -1526,4 +1533,14 @@ func terminateProcessGracefully(cmd *exec.Cmd) {
 		// Optionally, you can wait for the process to finish too
 		cmd.Wait()
 	}
+}
+
+// Function to check if all items in the array are the same
+func allItemsSame(items []string) bool {
+	for i := 1; i < len(items); i++ {
+		if items[i] != items[0] {
+			return false
+		}
+	}
+	return true
 }
